@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
 import SpainMap from './components/SpainMap.vue'
+import SidePanel from './components/SidePanel.vue';
 
 </script>
 
 <template>
-  <div style="height:100%;width:100%">
-    <SpainMap height="230px" width="100%"/>
-    <HelloWorld msg="VIVA JAPON"/>
-  </div>
+    <div class="h-screen w-screen flex">
+        <SidePanel />
+        <SpainMap class="grow"/>
+    </div>
 </template>
