@@ -1,9 +1,9 @@
 <template>
-    <div class="bg-emerald-900 flex justify-around" :class="props.class">
+    <div class="flex justify-around bg-stone-800" :class="props.class">
         <button 
             v-for="mode in APP_MODES"
-            class="grow flex justify-center items-center"
-            :class="{ 'bg-emerald-700 ring-emerald-200 ring-2 rounded-md ring-inset': props.currentMode==mode }" 
+            class="grow flex justify-center items-center border-2 border-b-0 rounded-t-lg border-emerald-950 bg-emerald-900"
+            :class="{ 'bg-emerald-700! border-emerald-200!': props.currentMode==mode }" 
             @click="$emit('changeMode', mode)"
             :key="mode"
         > 
