@@ -19,7 +19,7 @@ const mode = ref<AppMode | undefined>();
 const newMode = ref<AppMode | undefined>();
 const mapLoaded = ref<boolean>(false);
 
-function changeMode(m: AppMode) {
+function changeMode(m?: AppMode) {
     mode.value = undefined;
     newMode.value = m;
     mapLoaded.value = false;
