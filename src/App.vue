@@ -18,6 +18,7 @@ const isMobile = breakpoints.smallerOrEqual('md');
 const mode = ref<AppMode | undefined>();
 const newMode = ref<AppMode | undefined>();
 const mapLoaded = ref<boolean>(false);
+const firstLoad = ref<boolean>(false);
 
 function changeMode(m?: AppMode) {
     mode.value = undefined;
@@ -26,6 +27,7 @@ function changeMode(m?: AppMode) {
 }
 
 function onLoaded() {
+    firstLoad.value = true;
     mapLoaded.value = true;
     mode.value = newMode.value;
     newMode.value = undefined;
@@ -39,6 +41,7 @@ function onLoaded() {
         <div class="flex flex-col grow">
             <ModeBar 
                 :current-mode="mode"
+                :first-load="firstLoad"
                 @change-mode="changeMode"
                 class="h-16"    
             />

@@ -9,7 +9,6 @@ import { GeometryCombiner } from 'jsts/org/locationtech/jts/geom/util';
 
 import provTranslate from '/prov-translate.json?url'
 
-
 const nationGeojson = ref();
 const ccaaGeojson = ref();
 const provinceGeojson = ref();
@@ -114,7 +113,7 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
 
 
 async function getCCAAFeatures(writer: GeoJSONWriter) {
-    const features: Feature[] = [];
+    const features = [];
 
     for(const c of ccaaMeta) {
         const geometries = provincesMeta
@@ -130,9 +129,15 @@ async function getCCAAFeatures(writer: GeoJSONWriter) {
                 name: c.name,
                 provinces: c.provinces
             },
-            geometry: await runUnionWorker(geoBody) as any
+            geometry: undefined,
+            geoBody: geoBody
         });
     }
+    
+    await Promise.all(features.map(async (c) => {
+        c.geometry = await runUnionWorker(c.geoBody) as any;
+        delete c.geoBody;
+    }));
 
     return features;
 }

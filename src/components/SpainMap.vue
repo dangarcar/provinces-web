@@ -2,8 +2,8 @@
     <div :class="props.class">
         <LMap key="Global map" :center :zoom :options="{ zoomControl: false }" ref="map-ref" @ready="flyToBounds">
             <LTileLayer
-                :max-zoom=maxZoom
                 :min-zoom=5
+                :max-zoom="maxZoom"
                 :url="baseMapUrl"
                 attribution='&copy; <a href="https://ign.es/" target="_blank">IGN España</a>'
             />
