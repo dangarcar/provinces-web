@@ -18,7 +18,8 @@ const REF_BY_MODE: Record<AppMode, any> = { 'spa': nationGeojson, 'ccaa': ccaaGe
 const MIN_ISLAND_AREA = 1e-4;
 
 
-const WORKER_URL = new URL("./union.worker.ts", import.meta.url);
+import workerUrl from './union.worker.ts?url'
+const WORKER_URL = new URL(workerUrl, import.meta.url);
 
 const provTemplateURL = "https://api-features.ign.es/collections/administrativeunit/items?f=json&lang=es&limit=100&skipGeometry=true&nationallevelname=Provincia";
 const provURL = 'https://datos.gob.es/apidata/nti/territory/Province?_pageSize=100';
