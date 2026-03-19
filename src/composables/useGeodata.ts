@@ -18,8 +18,8 @@ const REF_BY_MODE: Record<AppMode, any> = { 'spa': nationGeojson, 'ccaa': ccaaGe
 const MIN_ISLAND_AREA = 1e-4;
 
 
-import workerUrl from './union.worker.ts?url'
-const WORKER_URL = new URL(workerUrl, import.meta.url);
+import Worker from './union.worker.ts?worker'
+//const WORKER_URL = new URL(workerUrl, import.meta.url);
 
 const provTemplateURL = "https://api-features.ign.es/collections/administrativeunit/items?f=json&lang=es&limit=100&skipGeometry=true&nationallevelname=Provincia";
 const provURL = 'https://datos.gob.es/apidata/nti/territory/Province?_pageSize=100';
@@ -82,7 +82,7 @@ export function useGeodata() {
 
 
 async function runUnionWorker(geoBody: any) {
-    const worker = new Worker(WORKER_URL, { type: 'module' });
+    const worker = new Worker();
     
     return await new Promise((resolve, reject) => {
         worker.onmessage = (e) => resolve(e.data);
@@ -128,19 +128,20 @@ async function getCCAAFeatures(writer: GeoJSONWriter) {
             type: 'Feature',
             properties: {
                 name: c.name,
-                provinces: c.provinces
+                provinces: c.provinces,
+                geoBody: geoBody
             },
             geometry: undefined,
-            geoBody: geoBody
         });
     }
     
     await Promise.all(features.map(async (c) => {
-        c.geometry = await runUnionWorker(c.geoBody) as any;
-        delete c.geoBody;
+        c.geometry = await runUnionWorker(c.properties!.geoBody) as any;
+        delete c.properties!.geoBody;
     }));
 
-    return features;
+    // @ts-ignore
+    return features as Feature[];
 }
 
 
