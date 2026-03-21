@@ -4,7 +4,7 @@ import type { Feature, FeatureCollection } from 'geojson';
 
 
 import { GeoJSONReader, GeoJSONWriter } from 'jsts/org/locationtech/jts/io';
-import { Geometry, GeometryFactory } from "jsts/org/locationtech/jts/geom";
+import { Geometry, GeometryFactory, Polygon } from "jsts/org/locationtech/jts/geom";
 import { GeometryCombiner } from 'jsts/org/locationtech/jts/geom/util';
 
 import provTranslate from '/prov-translate.json?url'
@@ -18,7 +18,7 @@ const REF_BY_MODE: Record<AppMode, any> = { 'spa': nationGeojson, 'ccaa': ccaaGe
 const MIN_ISLAND_AREA = 1e-4;
 
 
-import Worker from './union.worker.ts?worker'
+import UnionWorker from './union.worker.ts?worker'
 //const WORKER_URL = new URL(workerUrl, import.meta.url);
 
 const provTemplateURL = "https://api-features.ign.es/collections/administrativeunit/items?f=json&lang=es&limit=100&skipGeometry=true&nationallevelname=Provincia";
@@ -30,7 +30,7 @@ const provincesMeta: ProvinceMeta[] = [];
 const ccaaMeta: CCAAMeta[] = [];
 
 
-export function useGeodata() {
+export function useGeodata(cached: boolean) {
     async function setupData() {
         console.time('api2')
         
@@ -54,7 +54,10 @@ export function useGeodata() {
         if(REF_BY_MODE[mode].value)
             return;
         
+        const factory = new GeometryFactory();
+        const reader = new GeoJSONReader(factory);
         const writer = new GeoJSONWriter();
+        
         const jsonTemplate: FeatureCollection = {
             type: 'FeatureCollection',
             features: [] 
@@ -62,10 +65,10 @@ export function useGeodata() {
 
         switch(mode) {
             case 'spa':            
-                jsonTemplate.features = await getNationFeatures(writer);
+                jsonTemplate.features = await getNationFeatures(reader, writer);
             break;
             case 'ccaa':
-                jsonTemplate.features = await getCCAAFeatures(writer);
+                jsonTemplate.features = await getCCAAFeatures(reader, writer);
             break;
             case 'prov':
                 jsonTemplate.features = getProvinceFeatures(writer);
@@ -73,6 +76,8 @@ export function useGeodata() {
         }
 
         REF_BY_MODE[mode].value = jsonTemplate;
+
+        console.log(JSON.stringify(jsonTemplate));
     }
 
 
@@ -82,7 +87,7 @@ export function useGeodata() {
 
 
 async function runUnionWorker(geoBody: any) {
-    const worker = new Worker();
+    const worker = new UnionWorker();
     
     return await new Promise((resolve, reject) => {
         worker.onmessage = (e) => resolve(e.data);
@@ -113,7 +118,7 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
 }
 
 
-async function getCCAAFeatures(writer: GeoJSONWriter) {
+async function getCCAAFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
     const features = [];
 
     for(const c of ccaaMeta) {
@@ -131,28 +136,61 @@ async function getCCAAFeatures(writer: GeoJSONWriter) {
                 provinces: c.provinces,
                 geoBody: geoBody
             },
-            geometry: undefined,
+            geometry: c.geometry? writer.write(c.geometry) : undefined,
         });
     }
     
-    await Promise.all(features.map(async (c) => {
-        c.geometry = await runUnionWorker(c.properties!.geoBody) as any;
-        delete c.properties!.geoBody;
+
+    await Promise.all(features.filter(f => !f.geometry).map(async f => {
+        f.geometry = await runUnionWorker(f.properties!.geoBody) as any;
+        delete f.properties!.geoBody;
+        
+        const ccaa = ccaaMeta.find(e => e.name === f.properties.name); 
+        ccaa!.geometry = reader.read(f.geometry);
     }));
+
 
     // @ts-ignore
     return features as Feature[];
 }
 
 
-async function getNationFeatures(writer: GeoJSONWriter) {
-    const geometries = provincesMeta.map(p => p.geometry).flat();
-    const geoBody = writer.write(buildGeometry(geometries as any));
+async function getNationFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
+    if(!ccaaMeta[0]?.geometry)
+        await getCCAAFeatures(reader, writer);
+    
+    const geometries: Polygon[] = ccaaMeta.map(p => {
+        // @ts-ignore
+        if(p.geometry?._geometries)
+            // @ts-ignore
+            return p.geometry?._geometries;
+        else
+            return [p.geometry]
+    }).flat();
+
+    const buckets: Polygon[][] = [[], [], [], []];
+    const c1 = [-4, 40];
+
+    for(const g of geometries) {
+        const c2 = g.getEnvelopeInternal().centre();
+        let idx = 0;
+        if(c1[0]! > c2.getX()) idx += 2;
+        if(c1[1]! > c2.getY()) idx++;
+
+        buckets[idx]?.push(g);
+    }
+    
+    const divided = await Promise.all(buckets.map(b => {
+        const geoBody = writer.write(buildGeometry(b as any));
+        return runUnionWorker(geoBody).then(r => reader.read(r));
+    }));
+
+    const body = writer.write(buildGeometry(divided))
 
     return [{
         type: 'Feature',
         properties: { name: "España" },
-        geometry: await runUnionWorker(geoBody) as any
+        geometry: await runUnionWorker(body) as any
     }] as Feature[];
 }
 

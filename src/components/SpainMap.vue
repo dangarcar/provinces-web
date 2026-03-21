@@ -49,7 +49,7 @@ const bounds: [[number, number], [number, number]] = [
 const baseMapUrl = "https://www.ign.es/wmts/pnoa-ma?layer=OI.OrthoimageCoverage&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix={z}&TileCol={x}&TileRow={y}";
 //const secondMapUrl = "https://www.ign.es/wmts/ign-base?layer=IGNBaseOrto&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix={z}&TileCol={x}&TileRow={y}";
 
-const { setupData, getGeodata, loadGeometry } = useGeodata();
+const { setupData, getGeodata, loadGeometry } = useGeodata(false);
 
 
 onMounted(async () => {

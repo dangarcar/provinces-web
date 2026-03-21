@@ -4,8 +4,6 @@ import { GeometryFactory } from "jsts/org/locationtech/jts/geom";
 
 
 self.onmessage = (e: MessageEvent) =>  {    
-    console.log("I'm a worker thread")
-
     const factory = new GeometryFactory();
     const reader = new GeoJSONReader(factory);
     
