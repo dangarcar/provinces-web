@@ -26,20 +26,27 @@ const provURL = 'https://datos.gob.es/apidata/nti/territory/Province?_pageSize=1
 const ccaaURL = 'https://datos.gob.es/apidata/nti/territory/Autonomous-region?_pageSize=100';
 
 
+//GIST DATA
+const GIST_ID = "59dee82db0851cfb120f2856f44db5c0";
+
 const provincesMeta: ProvinceMeta[] = [];
 const ccaaMeta: CCAAMeta[] = [];
 
-
 export function useGeodata(cached: boolean) {
+    
     async function setupData() {
-        console.time('api2')
-        
-        const provinces = await fetch(provTemplateURL).then(r => r.json());
-        
         await fetchCCAAdata();
-
-        await fetchGeometry(provinces);
-        await populateProvinceGeom(provinces);
+        
+        if(cached) {
+            provinceGeojson.value = await fetch(`https://gist.githubusercontent.com/dangarcar/${GIST_ID}/raw/cached-prov.geojson`).then(r => r.json());
+            ccaaGeojson.value = await fetch(`https://gist.githubusercontent.com/dangarcar/${GIST_ID}/raw/cached-ccaa.geojson`).then(r => r.json());
+            nationGeojson.value = await fetch(`https://gist.githubusercontent.com/dangarcar/${GIST_ID}/raw/cached-nation.geojson`).then(r => r.json());
+        }
+        else {
+            const provinces = await fetch(provTemplateURL).then(r => r.json());
+            await fetchGeometry(provinces);
+            await populateProvinceGeom(provinces);
+        }
     }
 
     function getGeodata(mode?: AppMode) {
@@ -54,6 +61,7 @@ export function useGeodata(cached: boolean) {
         if(REF_BY_MODE[mode].value)
             return;
         
+
         const factory = new GeometryFactory();
         const reader = new GeoJSONReader(factory);
         const writer = new GeoJSONWriter();
@@ -76,8 +84,6 @@ export function useGeodata(cached: boolean) {
         }
 
         REF_BY_MODE[mode].value = jsonTemplate;
-
-        console.log(JSON.stringify(jsonTemplate));
     }
 
 

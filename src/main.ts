@@ -17,5 +17,9 @@ L.Icon.Default.mergeOptions({
 
 import App from './App.vue'
 
-const app = createApp(App)
+const params = new URLSearchParams(window.location.search)
+
+const app = createApp(App, {
+    cachedGeodata: params.has('cached_geodata')
+})
 app.mount('#app')

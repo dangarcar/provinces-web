@@ -11,6 +11,10 @@ import ModeBar from './components/ModeBar.vue';
 import LoadingScreen from './components/LoadingScreen.vue';
 
 
+const props = defineProps<{
+    cachedGeodata: boolean
+}>();
+
 const breakpoints = useBreakpoints(breakpointsTailwind);
 const isMobile = breakpoints.smallerOrEqual('md');
 
@@ -21,16 +25,24 @@ const mapLoaded = ref<boolean>(false);
 const firstLoad = ref<boolean>(false);
 
 function changeMode(m?: AppMode) {
+    mapLoaded.value = false;
+
     mode.value = undefined;
     newMode.value = m;
-    mapLoaded.value = false;
 }
 
-function onLoaded() {
-    firstLoad.value = true;
-    mapLoaded.value = true;
+async function onGeoLoaded() {
+    if(firstLoad.value === false) {
+        firstLoad.value = true;
+        mapLoaded.value = true;
+    }
+
     mode.value = newMode.value;
     newMode.value = undefined;
+}
+
+function onGeoLayerMounted() {
+    mapLoaded.value = true;
 }
 
 </script>
@@ -49,7 +61,14 @@ function onLoaded() {
             <div class="relative grow">
                 <LoadingScreen v-if="!mapLoaded" class="absolute inset-0 z-2000"/>
                 
-                <SpainMap class="h-full z-0" :mode="mode" :new-mode="newMode" @on-loaded="onLoaded"/>
+                <SpainMap class="h-full z-0" 
+                    :mode="mode" 
+                    :new-mode="newMode" 
+                    :cached-geodata="props.cachedGeodata" 
+                    :map-ready="mapLoaded"
+                    @on-geo-loaded="onGeoLoaded"
+                    @on-geo-mounted-layer="onGeoLayerMounted"
+                />
             </div>
         </div>
 

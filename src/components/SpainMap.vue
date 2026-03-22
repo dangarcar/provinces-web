@@ -1,5 +1,5 @@
 <template>
-    <div :class="props.class">
+    <div>
         <LMap key="Global map" :center :zoom :options="{ zoomControl: false }" ref="map-ref" @ready="flyToBounds">
             <LTileLayer
                 :min-zoom=5
@@ -7,36 +7,36 @@
                 :url="baseMapUrl"
                 attribution='&copy; <a href="https://ign.es/" target="_blank">IGN España</a>'
             />
-            <LGeoJson 
-                v-if="props.mode"
-                :geojson="getGeodata(mode)"
-                :options="{ onEachFeature: onEachFeature }"
-                :options-style="getStyle(mode)"
+            <GeoJsonLayer 
+                :cachedGeodata :map-ready :mode :new-mode :map-ref="mapRef"
+                @on-geo-loaded="$emit('onGeoLoaded')"
+                @on-geo-mounted-layer="$emit('onGeoMountedLayer')"
             />
         </LMap> 
     </div>
 </template>
 
+
+
 <script setup lang="ts">
 
-import { LMap, LTileLayer, LGeoJson } from "@vue-leaflet/vue-leaflet"
-import { onMounted, useTemplateRef, onBeforeUnmount, watch } from "vue";
-import colors from "tailwindcss/colors"
+import { LMap, LTileLayer } from "@vue-leaflet/vue-leaflet"
+import { onMounted, useTemplateRef, onBeforeUnmount } from "vue";
 
-import { useGeodata } from "../composables/useGeodata";
-import type { AppMode } from "../types";
-import type { StyleFunction } from "leaflet";
+import { type AppMode } from "../types";
+import GeoJsonLayer from "./GeoJsonLayer.vue";
 
 const props = defineProps<{
-    class: string,
+    cachedGeodata: boolean,
+    mapReady: boolean,
     mode?: AppMode,
     newMode?: AppMode
 }>();
 
-const emit = defineEmits(['onLoaded']);
+const emit = defineEmits(['onGeoLoaded', 'onGeoMountedLayer']);
+
 
 const mapRef = useTemplateRef('map-ref');
-
 
 const zoom = 6, maxZoom = 12
 const center: [number, number] = [40.4268, -3.7038] // Madrid
@@ -49,68 +49,19 @@ const bounds: [[number, number], [number, number]] = [
 const baseMapUrl = "https://www.ign.es/wmts/pnoa-ma?layer=OI.OrthoimageCoverage&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix={z}&TileCol={x}&TileRow={y}";
 //const secondMapUrl = "https://www.ign.es/wmts/ign-base?layer=IGNBaseOrto&style=default&tilematrixset=GoogleMapsCompatible&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/png&TileMatrix={z}&TileCol={x}&TileRow={y}";
 
-const { setupData, getGeodata, loadGeometry } = useGeodata(false);
 
-
-onMounted(async () => {
+onMounted(() => {
     window.addEventListener("resize", flyToBounds);
-    
-    setupData().then(() => emit('onLoaded'))
 })
-
 
 onBeforeUnmount(() => {
     window.removeEventListener("resize", flyToBounds);
 })
 
 
-watch(() => props.newMode, (newMode) => {
-    if(newMode !== undefined) {
-        console.time('api3')
-        loadGeometry(newMode).then(() => {
-            console.timeEnd('api3')    
-            emit('onLoaded')
-        });
-    }
-})
-
-
-//TODO: this is useless
-function onEachFeature(feature: any, layer: any) {
-    layer.on({
-        mouseover: (e: any) => { console.log(feature.properties) },
-        mouseout: (f: any) => { console.log(f.target); },
-        click: (e: any) => { console.log("CLICK " + e); }
-    });
-}
-
 function flyToBounds() {
     if(mapRef.value) {
         mapRef.value?.leafletObject?.flyToBounds(bounds, { duration: 1.0 })
-    }
-}
-
-
-function getStyle(mode?: AppMode): StyleFunction {
-    if(!mode) 
-        return () => ({})
-
-    switch(mode) {
-        case "spa": 
-            return () => ({
-                color: colors.rose[400],
-                fillColor: colors.rose[500]
-            });
-        case "ccaa": 
-            return () => ({
-                color: colors.emerald[300],
-                fillColor: colors.emerald[400]
-            });
-        case "prov": 
-            return () => ({
-                color: colors.cyan[300],
-                fillColor: colors.cyan[400]
-            });
     }
 }
 
