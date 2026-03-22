@@ -1,23 +1,21 @@
 <script setup lang="ts">
 
 import { ref } from 'vue';
-import { useBreakpoints, breakpointsTailwind } from '@vueuse/core'; 
-
 import type { AppMode } from './types';
 
 import SpainMap from './components/SpainMap.vue'
 import SidePanel from './components/SidePanel.vue';
 import ModeBar from './components/ModeBar.vue';
 import LoadingScreen from './components/LoadingScreen.vue';
+import { useIsMobile } from './composables/useIsMobile';
 
 
 const props = defineProps<{
     cachedGeodata: boolean
 }>();
 
-const breakpoints = useBreakpoints(breakpointsTailwind);
-const isMobile = breakpoints.smallerOrEqual('md');
 
+const isMobile = useIsMobile();
 
 const mode = ref<AppMode | undefined>();
 const newMode = ref<AppMode | undefined>();
@@ -65,7 +63,6 @@ function onGeoLayerMounted() {
                     :mode="mode" 
                     :new-mode="newMode" 
                     :cached-geodata="props.cachedGeodata" 
-                    :map-ready="mapLoaded"
                     @on-geo-loaded="onGeoLoaded"
                     @on-geo-mounted-layer="onGeoLayerMounted"
                 />

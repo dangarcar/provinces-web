@@ -1,6 +1,6 @@
 <template>
     <div>
-        <LMap key="Global map" :center :zoom :options="{ zoomControl: false }" ref="map-ref" @ready="flyToBounds">
+        <LMap key="Global map" :center :zoom :options="{ zoomControl: false }" ref="map-ref" @vue:updated="flyToBounds">
             <LTileLayer
                 :min-zoom=5
                 :max-zoom="maxZoom"
@@ -8,7 +8,7 @@
                 attribution='&copy; <a href="https://ign.es/" target="_blank">IGN España</a>'
             />
             <GeoJsonLayer 
-                :cachedGeodata :map-ready :mode :new-mode :map-ref="mapRef"
+                :cachedGeodata :mode :new-mode :map-ref="mapRef"
                 @on-geo-loaded="$emit('onGeoLoaded')"
                 @on-geo-mounted-layer="$emit('onGeoMountedLayer')"
             />
@@ -28,7 +28,6 @@ import GeoJsonLayer from "./GeoJsonLayer.vue";
 
 const props = defineProps<{
     cachedGeodata: boolean,
-    mapReady: boolean,
     mode?: AppMode,
     newMode?: AppMode
 }>();
