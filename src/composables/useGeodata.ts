@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { AppMode, CCAAMeta, ProvinceMeta } from '../types';
+import type { AppMode, CCAAMeta, PolygonCentroid, ProvinceMeta, vec2 } from '../types';
 import type { Feature, FeatureCollection } from 'geojson';
 
 
@@ -19,7 +19,6 @@ const MIN_ISLAND_AREA = 1e-4;
 
 
 import UnionWorker from './union.worker.ts?worker'
-//const WORKER_URL = new URL(workerUrl, import.meta.url);
 
 const provTemplateURL = "https://api-features.ign.es/collections/administrativeunit/items?f=json&lang=es&limit=100&skipGeometry=true&nationallevelname=Provincia";
 const provURL = 'https://datos.gob.es/apidata/nti/territory/Province?_pageSize=100';
@@ -31,6 +30,7 @@ const GIST_ID = "59dee82db0851cfb120f2856f44db5c0";
 
 const provincesMeta: ProvinceMeta[] = [];
 const ccaaMeta: CCAAMeta[] = [];
+
 
 export function useGeodata(cached: boolean) {
     
@@ -92,6 +92,8 @@ export function useGeodata(cached: boolean) {
 
 
 
+//ASYNC GEOMETRY LOADING FUNCTIONS
+
 async function runUnionWorker(geoBody: any) {
     const worker = new UnionWorker();
     
@@ -108,15 +110,20 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
     const features: Feature[] = [];
 
     for(const p of provincesMeta) {
-        const geometry = buildGeometry(p.geometry as any);
-        
+        const geometry = writer.write(buildGeometry(p.geometry as any));
+        const { centroid, area } = getCentroidAndArea(geometry);
+
+        p.centroid = centroid;
+        p.area = area;
+
         features.push({
             type: 'Feature',
             properties: {
                 name: p.name,
-                ccaa: p.ccaa
+                ccaa: p.ccaa,
+                centroid: [centroid.y, centroid.x]
             },
-            geometry: writer.write(geometry)
+            geometry: geometry
         });
     }
 
@@ -127,20 +134,37 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
 async function getCCAAFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
     const features = [];
 
+    if(!provincesMeta[0]?.centroid)
+        getProvinceFeatures(writer);
+
+
     for(const c of ccaaMeta) {
-        const geometries = provincesMeta
+        const provinces = provincesMeta
             .filter(p => p.ccaa === c.name)
+            
+        const geometries = provinces
             .map(p => p.geometry)
             .flat()
 
         const geoBody = writer.write(buildGeometry(geometries as any));
+
+        c.area = provinces.reduce((acc, e) => acc + e.area, 0);
+        const unnormCentroid = provinces.reduce((acc, e) => {
+            return { 
+                x: acc.x + e.area * e.centroid.x, 
+                y: acc.y + e.area * e.centroid.y
+            };
+        },{ x:0, y:0 });
+
+        c.centroid = { x: unnormCentroid.x / c.area, y: unnormCentroid.y / c.area }
 
         features.push({
             type: 'Feature',
             properties: {
                 name: c.name,
                 provinces: c.provinces,
-                geoBody: geoBody
+                geoBody: geoBody,
+                centroid: [c.centroid.y, c.centroid.x]
             },
             geometry: c.geometry? writer.write(c.geometry) : undefined,
         });
@@ -191,16 +215,28 @@ async function getNationFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
         return runUnionWorker(geoBody).then(r => reader.read(r));
     }));
 
+
     const body = writer.write(buildGeometry(divided))
+
+    const area = ccaaMeta.reduce((acc, e) => acc + e.area, 0);
+    const unnormCentroid = ccaaMeta.reduce((acc, e) => {
+        return { 
+            x: acc.x + e.area * e.centroid.x, 
+            y: acc.y + e.area * e.centroid.y
+        };
+    },{ x:0, y:0 });
+    const centroid = { x: unnormCentroid.x / area, y: unnormCentroid.y / area }
 
     return [{
         type: 'Feature',
-        properties: { name: "España" },
+        properties: { name: "España", centroid: [centroid.y, centroid.x] },
         geometry: await runUnionWorker(body) as any
     }] as Feature[];
 }
 
 
+
+//FUNCTIONS FOR INITIAL DATA FETCHING
 
 async function fetchGeometry(provinces: any) {
     const v = provinces.features;
@@ -215,7 +251,6 @@ async function fetchGeometry(provinces: any) {
 }
 
 
-
 async function fetchCCAAdata() {
     const provRes = await fetch(provURL).then(r => r.json());
     const ccaaRes = await fetch(ccaaURL).then(r => r.json());
@@ -226,7 +261,9 @@ async function fetchCCAAdata() {
         provincesMeta.push({
             name: e.label,
             ccaa: ccaaName,
-            geometry: null
+            geometry: null,
+            area: 0,
+            centroid: { x: 0, y: 0 }
         })
 
         const ccaa = ccaaMeta.find(e => e.name === ccaaName);
@@ -236,12 +273,13 @@ async function fetchCCAAdata() {
             ccaaMeta.push({
                 name: ccaaName,
                 provinces: [e.label],
-                geometry: null
+                geometry: null,
+                area: 0,
+                centroid: { x: 0, y: 0 }
             });
         }
     }
 }
-
 
 
 function buildGeometry(geometries: Geometry[]): Geometry {
@@ -252,7 +290,6 @@ function buildGeometry(geometries: Geometry[]): Geometry {
 
     return geomCol!;
 }
-
 
 
 async function populateProvinceGeom(provinces: any) {
@@ -267,4 +304,55 @@ async function populateProvinceGeom(provinces: any) {
         if(e !== undefined)
             e.geometry = f.geometry._geometries.filter((e:any) => e.getArea() > MIN_ISLAND_AREA);
     }
+}
+
+
+
+//AREA AND CENTROID CALCULATIONS
+
+function shoelaceArea(v: [number, number][]) {
+    return v.reduce((acc, vi, i) => {
+        const vj = v[(i+1) % v.length]!;
+        return acc + vi[0]*vj[1] - vj[0]*vi[1];
+    }, 0) * 0.5;
+}
+
+function centerOfPolTimesArea(v: [number,number][]): vec2 {
+    return v.reduce((acc, vi, i) => {
+        const vj = v[(i+1) % v.length]!;
+        const fi = vi[0]*vj[1] - vj[0]*vi[1];
+        const dx = vi[0] + vj[0];
+        const dy = vi[1] + vj[1];
+
+        return {x: acc.x + dx*fi, y: acc.y + dy*fi};
+    }, {x:0, y:0});
+}
+
+function getCentroidAndArea(geometry: any) {
+    const centerList: PolygonCentroid[] = [];
+
+    for(const ip of geometry.coordinates) {
+        if(typeof ip[0][0] === "number") {
+            const p = ip;
+            const area = shoelaceArea(p);
+            const center = centerOfPolTimesArea(p);
+
+            centerList.push({area, centroid: center});
+        } else {
+            for(const p of ip) {
+                const area = shoelaceArea(p);
+                const center = centerOfPolTimesArea(p);
+                
+                centerList.push({area, centroid: center});
+            }
+        }
+    }
+
+    const totalArea = centerList.reduce((acc, e) => acc + e.area, 0)
+    const newVec: vec2 = centerList.reduce((acc, e) => { 
+        return { x: acc.x + e.centroid.x, y: acc.y + e.centroid.y }
+    }, {x:0, y:0})
+
+    const centroid = { x: newVec.x / (6*totalArea), y: newVec.y / (6*totalArea) };
+    return { centroid: centroid, area: Math.abs(totalArea) };
 }

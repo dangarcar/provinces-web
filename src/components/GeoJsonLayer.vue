@@ -68,7 +68,7 @@ watch(() => props.mode, async (mode) => {
 }, { immediate: true })
 
 
-function onEachFeature(_: Feature, layer: L.Layer) {
+function onEachFeature(f: Feature, layer: L.Layer) {
     layer.on({
         mouseover: e => { 
             if(!props.mode || lastLayer) 
@@ -94,6 +94,8 @@ function onEachFeature(_: Feature, layer: L.Layer) {
             if(lastLayer !== layer) {
                 layer.setStyle(clickStyle[props.mode])
                 lastLayer = layer;
+
+                console.log(f) //FIXME:
             } else {
                 if(!isMobile.value)
                     layer.setStyle(hoverStyle[props.mode])
