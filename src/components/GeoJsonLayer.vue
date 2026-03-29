@@ -23,7 +23,12 @@ const props = defineProps<{
     newMode?: AppMode
 }>();
 
-const emit = defineEmits(['onGeoLoaded', 'onGeoMountedLayer']);
+const emit = defineEmits<{
+    onGeoLoaded: [],
+    onGeoMountedLayer: [],
+    elementSelected: [feature?: Feature]
+}>();
+
 
 const { setupData, getGeodata, loadGeometry } = useGeodata(props.cachedGeodata);
 
@@ -95,11 +100,13 @@ function onEachFeature(f: Feature, layer: L.Layer) {
                 layer.setStyle(clickStyle[props.mode])
                 lastLayer = layer;
 
-                console.log(f) //FIXME:
+                emit('elementSelected', f);
             } else {
                 if(!isMobile.value)
                     layer.setStyle(hoverStyle[props.mode])
+                
                 lastLayer = undefined;
+                emit('elementSelected', undefined);
             }
 
             layer.bringToFront(); 

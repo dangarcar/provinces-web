@@ -110,7 +110,9 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
     const features: Feature[] = [];
 
     for(const p of provincesMeta) {
-        const geometry = writer.write(buildGeometry(p.geometry as any));
+        const rawGeometry = buildGeometry(p.geometry as any);
+        const env = rawGeometry.getEnvelopeInternal();
+        const geometry = writer.write(rawGeometry);
         const { centroid, area } = getCentroidAndArea(geometry);
 
         p.centroid = centroid;
@@ -118,12 +120,13 @@ function getProvinceFeatures(writer: GeoJSONWriter): Feature[] {
 
         features.push({
             type: 'Feature',
+            bbox: [env.getMinX(), env.getMinY(), env.getMaxX(), env.getMaxY()],
             properties: {
                 name: p.name,
                 ccaa: p.ccaa,
                 centroid: [centroid.y, centroid.x]
             },
-            geometry: geometry
+            geometry: geometry,
         });
     }
 
@@ -146,7 +149,9 @@ async function getCCAAFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
             .map(p => p.geometry)
             .flat()
 
-        const geoBody = writer.write(buildGeometry(geometries as any));
+        const rawGeometry = buildGeometry(geometries as any);
+        const env = rawGeometry.getEnvelopeInternal();
+        const geoBody = writer.write(rawGeometry);
 
         c.area = provinces.reduce((acc, e) => acc + e.area, 0);
         const unnormCentroid = provinces.reduce((acc, e) => {
@@ -160,6 +165,7 @@ async function getCCAAFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
 
         features.push({
             type: 'Feature',
+            bbox: [env.getMinX(), env.getMinY(), env.getMaxX(), env.getMaxY()],
             properties: {
                 name: c.name,
                 provinces: c.provinces,
@@ -216,7 +222,9 @@ async function getNationFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
     }));
 
 
-    const body = writer.write(buildGeometry(divided))
+    const rawGeometry = buildGeometry(divided);
+    const env = rawGeometry.getEnvelopeInternal();
+    const body = writer.write(rawGeometry);
 
     const area = ccaaMeta.reduce((acc, e) => acc + e.area, 0);
     const unnormCentroid = ccaaMeta.reduce((acc, e) => {
@@ -229,6 +237,7 @@ async function getNationFeatures(reader: GeoJSONReader, writer: GeoJSONWriter) {
 
     return [{
         type: 'Feature',
+        bbox: [env.getMinX(), env.getMinY(), env.getMaxX(), env.getMaxY()],
         properties: { name: "España", centroid: [centroid.y, centroid.x] },
         geometry: await runUnionWorker(body) as any
     }] as Feature[];
