@@ -1,4 +1,5 @@
 import type { Polygon } from "jsts/org/locationtech/jts/geom";
+import type { LatLng } from "leaflet";
 
 
 export const APP_MODES = ['spa', 'ccaa', 'prov'] as const;
@@ -29,4 +30,20 @@ export interface vec2 {
 export interface PolygonCentroid {
     area: number;
     centroid: vec2;
+}
+
+export interface Municipality {
+    name: string,
+    population: number, 
+    ineCode: string,
+    coords: LatLng | null,
+    provCap: boolean,
+    ccaaCap: boolean,
+    nationCap: boolean
+}
+
+export interface PopProvince {
+    name: string, 
+    cpro: number,
+    muns: Municipality[]
 }

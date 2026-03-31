@@ -15,6 +15,7 @@ import { type AppMode } from "../types";
 import L, { type StyleFunction } from "leaflet";
 import type { Feature } from "geojson";
 import { useIsMobile } from "../composables/useIsMobile";
+import { usePopulation } from "../composables/usePopulation";
 
 const props = defineProps<{
     cachedGeodata: boolean,
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 
 
 const { setupData, getGeodata, loadGeometry } = useGeodata(props.cachedGeodata);
+const { loadPopulation, getMunicipalities } = usePopulation(props.cachedGeodata);
 
 const isMobile = useIsMobile();
 
@@ -39,7 +41,9 @@ const layerRef = useTemplateRef('layer-ref');
 let geolayer: L.GeoJSON;
 let lastLayer: L.Layer | undefined;
 
-onMounted(() => setupData().then(() => emit('onGeoLoaded')));
+onMounted(() => {
+    Promise.all([ setupData(), loadPopulation() ]).then(() => emit('onGeoLoaded'));
+});
 
 watch(() => props.newMode, (newMode) => {
     if(newMode !== undefined) {

@@ -1,0 +1,210 @@
+[
+    {
+        "name": "A Coruña",
+        "code": "2868"
+    },
+    {
+        "name": "Álava",
+        "code": "2854"
+    },
+    {
+        "name": "Albacete",
+        "code": "2855"
+    },
+    {
+        "name": "Alicante/Alacant",
+        "code": "2856"
+    },
+    {
+        "name": "Almería",
+        "code": "2857"
+    },
+    {
+        "name": "Asturias",
+        "code": "2886"
+    },
+    {
+        "name": "Ávila",
+        "code": "2858"
+    },
+    {
+        "name": "Badajoz",
+        "code": "2859"
+    },
+    {
+        "name": "Barcelona",
+        "code": "2861"
+    },
+    {
+        "name": "Burgos",
+        "code": "2862"
+    },
+    {
+        "name": "Cáceres",
+        "code": "2863"
+    },
+    {
+        "name": "Cádiz",
+        "code": "2864"
+    },
+    {
+        "name": "Cantabria",
+        "code": "2893"
+    },
+    {
+        "name": "Castellón/Castelló",
+        "code": "2865"
+    },
+    {
+        "name": "Ceuta",
+        "code": "2908"
+    },
+    {
+        "name": "Ciudad Real",
+        "code": "2866"
+    },
+    {
+        "name": "Córdoba",
+        "code": "2901"
+    },
+    {
+        "name": "Cuenca",
+        "code": "2869"
+    },
+    {
+        "name": "Girona",
+        "code": "2870"
+    },
+    {
+        "name": "Granada",
+        "code": "2871"
+    },
+    {
+        "name": "Guadalajara",
+        "code": "2872"
+    },
+    {
+        "name": "Guipúzcoa",
+        "code": "2873"
+    },
+    {
+        "name": "Huelva",
+        "code": "2874"
+    },
+    {
+        "name": "Huesca",
+        "code": "2875"
+    },
+    {
+        "name": "Illes Balears",
+        "code": "2860"
+    },
+    {
+        "name": "Jaén",
+        "code": "2876"
+    },
+    {
+        "name": "La Rioja",
+        "code": "2879"
+    },
+    {
+        "name": "Las Palmas",
+        "code": "2889"
+    },
+    {
+        "name": "León",
+        "code": "2877"
+    },
+    {
+        "name": "Lleida",
+        "code": "2878"
+    },
+    {
+        "name": "Lugo",
+        "code": "2880"
+    },
+    {
+        "name": "Madrid",
+        "code": "2881"
+    },
+    {
+        "name": "Málaga",
+        "code": "2882"
+    },
+    {
+        "name": "Melilla",
+        "code": "2909"
+    },
+    {
+        "name": "Murcia",
+        "code": "2883"
+    },
+    {
+        "name": "Navarra",
+        "code": "2884"
+    },
+    {
+        "name": "Ourense",
+        "code": "2885"
+    },
+    {
+        "name": "Palencia",
+        "code": "2888"
+    },
+    {
+        "name": "Pontevedra",
+        "code": "2890"
+    },
+    {
+        "name": "Salamanca",
+        "code": "2891"
+    },
+    {
+        "name": "Santa Cruz de Tenerife",
+        "code": "2892"
+    },
+    {
+        "name": "Segovia",
+        "code": "2894"
+    },
+    {
+        "name": "Sevilla",
+        "code": "2895"
+    },
+    {
+        "name": "Soria",
+        "code": "2896"
+    },
+    {
+        "name": "Tarragona",
+        "code": "2900"
+    },
+    {
+        "name": "Teruel",
+        "code": "2899"
+    },
+    {
+        "name": "Toledo",
+        "code": "2902"
+    },
+    {
+        "name": "Valencia/València",
+        "code": "2903"
+    },
+    {
+        "name": "Valladolid",
+        "code": "2904"
+    },
+    {
+        "name": "Vizcaya",
+        "code": "2905"
+    },
+    {
+        "name": "Zamora",
+        "code": "2906"
+    },
+    {
+        "name": "Zaragoza",
+        "code": "2907"
+    }
+]

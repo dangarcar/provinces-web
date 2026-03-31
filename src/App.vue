@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, useTemplateRef } from 'vue';
+import { ref } from 'vue';
 import type { AppMode } from './types';
 
 import SpainMap from './components/SpainMap.vue'
@@ -20,7 +20,6 @@ const mapLoaded = ref<boolean>(false);
 const firstLoad = ref<boolean>(false);
 
 const selectedFeature = ref<Feature>();
-const mapRef = useTemplateRef('map-ref');
 
 function changeMode(m?: AppMode) {
     mapLoaded.value = false;
@@ -70,7 +69,6 @@ function onElementSelected(feature?: Feature) {
                 <LoadingScreen v-if="!mapLoaded" class="absolute inset-0 z-2000"/>
                 
                 <SpainMap class="h-full z-0" 
-                    ref="map-ref"
                     :mode="mode" 
                     :new-mode="newMode" 
                     :cached-geodata="props.cachedGeodata" 
