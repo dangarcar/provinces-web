@@ -84,24 +84,35 @@ export function usePointToLayer(mode: AppMode) {
         const cap = capitalByMode(f, mode);
 
         if(isMunicipality)
-            return L.circleMarker(latlng, {
-                radius: cap? 12: 9,
+            return L.circleMarker(latlng, { //radius is later assigned
                 fillColor: cap? colors.red[500] : colors.yellow[400],
                 fillOpacity: 1,
+                color: colors.stone[900],
+                weight: 1,
                 pane: 'shadowPane',
             });
         else {
             const options = structuredClone(L.Icon.Default.prototype.options) as L.IconOptions;
             
             switch(f.properties?.centerType) {
-                case 'centroid': options.iconUrl = marker1; break;
-                case 'municipal': options.iconUrl = marker2; break;
-                case 'population': options.iconUrl = marker3; break;
+                case 'centroid': options.iconUrl = options.iconRetinaUrl = marker1; break;
+                case 'municipal': options.iconUrl = options.iconRetinaUrl = marker2; break;
+                case 'population': options.iconUrl = options.iconRetinaUrl = marker3; break;
             }
 
             return L.marker(latlng, { icon: L.icon(options) });
         }
     }
+}
+
+export function resizeMarkers(layer: any, zoom: number, mode: AppMode) {
+    if(layer.feature.properties.centerType)
+        return;
+
+    const cap = capitalByMode(layer.feature, mode)
+
+    layer.setRadius(Math.pow(1.4, zoom - (cap? 1:4)));
+    layer.setStyle({ opacity: zoom < 7? 0 : 1 });
 }
 
 function capitalByMode(f: Feature, mode: AppMode) {

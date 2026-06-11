@@ -27,7 +27,7 @@ import { usePopulation } from "../composables/usePopulation";
 import { useGeodata } from "../composables/useGeodata";
 import { useIsMobile } from "../composables/useIsMobile";
 import { getStyle, getStyleFunction } from "../leaflet/polyLayerFunctions";
-import { getPointLayer, useOnEachFeaturePoint, usePointToLayer } from "../leaflet/markerLayerFunctions";
+import { getPointLayer, resizeMarkers, useOnEachFeaturePoint, usePointToLayer } from "../leaflet/markerLayerFunctions";
 
 const props = defineProps<{
     cachedGeodata: boolean,
@@ -105,7 +105,7 @@ watch(() => props.mode, async (mode) => {
         
         leaflet.addLayer(geolayer);
         polyLayerId = leaflet.getLayerId(geolayer);
-     
+        
         emit('onGeoMountedLayer')
     }
 }, { immediate: true })
@@ -171,6 +171,11 @@ function setFeature(feature?: Feature) {
 
     layerGroup.addLayer(geolayer);
     pointLayerId = layerGroup.getLayerId(geolayer);
+
+    //Resize markers 
+    mapRef.value?.leafletObject?.on('zoomend', e => {
+        geolayer.eachLayer(l => resizeMarkers(l, e.target.getZoom(), props.mode!))
+    })
 
     //Smooth map animation
     onSelectedElement(feature);

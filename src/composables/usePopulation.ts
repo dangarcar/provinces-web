@@ -3,7 +3,7 @@ import { LatLng } from 'leaflet';
 
 import { CENTER_TYPES, type CenterType, type Municipality, type PopProvince } from '../types';
 import ineTables from '/ine-tables.json?url'
-import type { Feature, FeatureCollection } from 'geojson';
+import type { Feature, FeatureCollection, Point } from 'geojson';
 
 
 export function usePopulation() {
@@ -110,30 +110,49 @@ export function usePopulation() {
         return munsByProvince.value?.flatMap(p => getMunicipalities(p.name)!);
     }
 
-    function addCenters(collection: FeatureCollection, centroid: LatLng) {
-        //CENTROID        
-        collection.features.push({
-            type: 'Feature',
-            properties: {
-                centerType: 'centroid' as CenterType
-            },
-            geometry: {
-                type: 'Point',
-                coordinates: [centroid.lng, centroid.lat]
-            }
-        })
+    function addCenters(collection: FeatureCollection, centroid: LatLng) {    
+        //MUNICIPALITY CENTRE
+        const municipal = collection.features.reduce((total, e) => [total[0] + e.geometry.coordinates[0], total[1] + e.geometry.coordinates[1]], [0, 0]);
+        municipal[0] /= collection.features.length;
+        municipal[1] /= collection.features.length;
+
+
+        //MUNICIPALITY CENTRE
+        const population = collection.features.reduce((total, e) => {
+            const pop = e.properties?.population;
+            return [total[0] + pop * e.geometry.coordinates[0], total[1] + pop * e.geometry.coordinates[1]]
+        }, [0, 0]);
+        const popSum = collection.features.reduce((total, e) => total + e.properties?.population, 0);
+        population[0]! /= popSum;
+        population[1]! /= popSum;
 
 
         collection.features.push({
             type: 'Feature',
-            properties: {
-                centerType: 'centroid' as CenterType
-            },
+            properties: { centerType: 'centroid' as CenterType },
             geometry: {
                 type: 'Point',
                 coordinates: [centroid.lng, centroid.lat]
             }
-        })
+        });
+
+        collection.features.push({
+            type: 'Feature',
+            properties: { centerType: 'municipal' as CenterType },
+            geometry: {
+                type: 'Point',
+                coordinates: municipal
+            }
+        });
+
+        collection.features.push({
+            type: 'Feature',
+            properties: { centerType: 'population' as CenterType },
+            geometry: {
+                type: 'Point',
+                coordinates: population
+            }
+        });
 
         return collection;
     }
