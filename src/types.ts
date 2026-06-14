@@ -54,3 +54,9 @@ export interface PopProvince {
     totalPopulation: number,
     muns: Municipality[]
 }
+
+export interface Centers {
+    centroid: [number, number],
+    municipal: [number, number],
+    population: [number, number]
+}

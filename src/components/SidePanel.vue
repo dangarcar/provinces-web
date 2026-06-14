@@ -13,6 +13,7 @@ const props = defineProps<{
         <div class="m-3 min-h-[20svh] md:min-w-[20svw]">
 
             <h1>{{ selectedFeature?.properties?.name }}</h1>
+            <p>{{ selectedFeature?.properties }}</p>
             <!--<h1 class="text-4xl">{{ province? province["nameunit"]:'' }}</h1>
             <p>{{ province }}</p>-->
             

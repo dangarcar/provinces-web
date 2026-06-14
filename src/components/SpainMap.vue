@@ -27,7 +27,7 @@ import { usePopulation } from "../composables/usePopulation";
 import { useGeodata } from "../composables/useGeodata";
 import { useIsMobile } from "../composables/useIsMobile";
 import { getStyle, getStyleFunction } from "../leaflet/polyLayerFunctions";
-import { getPointLayer, resizeMarkers, useOnEachFeaturePoint, usePointToLayer } from "../leaflet/markerLayerFunctions";
+import { addCenterFeatures, getPointLayer, resizeMarkers, useOnEachFeaturePoint, usePointToLayer } from "../leaflet/markerLayerFunctions";
 
 const props = defineProps<{
     cachedGeodata: boolean,
@@ -48,7 +48,7 @@ let lastFeatureUndef = true;
 
 const isMobile = useIsMobile();
 const { setupData, getGeodata, loadGeometry } = useGeodata(props.cachedGeodata);
-const { setupPopulation, getMunicipalities, getAllMunicipalities, addCenters } = usePopulation();
+const { setupPopulation, getMunicipalities, getAllMunicipalities, getCenters } = usePopulation();
 
 let lastLayer: L.Layer | undefined;
 let polyLayerId: number = -1;
@@ -160,22 +160,28 @@ function setFeature(feature?: Feature) {
     const layerGroup = layerRef.value?.leafletObject!;
     if(layerGroup.getLayers().length > 1)
         layerGroup.removeLayer(pointLayerId);
+
     
-    if(!feature || !props.mode)
-        return;
+    if(feature && props.mode) {
+        const pointLayer = getPointLayer(feature, props.mode, getMunicipalities, getAllMunicipalities);
+        const centers = getCenters(pointLayer, feature.properties?.centroid);
+        if(feature.properties) {
+            feature.properties.centers = centers;
+        }
 
-    const geolayer = L.geoJSON();
-    geolayer.options.onEachFeature = useOnEachFeaturePoint(props.mode);
-    geolayer.options.pointToLayer = usePointToLayer(props.mode);
-    geolayer.addData(getPointLayer(feature, props.mode, getMunicipalities, getAllMunicipalities, addCenters));
+        const geolayer = L.geoJSON();
+        geolayer.options.onEachFeature = useOnEachFeaturePoint(props.mode, centers);
+        geolayer.options.pointToLayer = usePointToLayer(props.mode);
+        geolayer.addData(addCenterFeatures(pointLayer, centers));
 
-    layerGroup.addLayer(geolayer);
-    pointLayerId = layerGroup.getLayerId(geolayer);
-
-    //Resize markers 
-    mapRef.value?.leafletObject?.on('zoomend', e => {
-        geolayer.eachLayer(l => resizeMarkers(l, e.target.getZoom(), props.mode!))
-    })
+        layerGroup.addLayer(geolayer);
+        pointLayerId = layerGroup.getLayerId(geolayer);
+        
+        //Resize markers 
+        mapRef.value?.leafletObject?.on('zoomend', e => {
+            geolayer.eachLayer(l => resizeMarkers(l, e.target.getZoom(), props.mode!))
+        })
+    }
 
     //Smooth map animation
     onSelectedElement(feature);
@@ -185,7 +191,7 @@ function setFeature(feature?: Feature) {
 //MAP CONTROL
 async function onSelectedElement(feature?: Feature) {
     const mapObject = mapRef.value?.leafletObject!;
-    
+
     await nextTick();
 
     const animTime = (!lastFeatureUndef && feature)? 0: 400;
@@ -206,7 +212,6 @@ async function onSelectedElement(feature?: Feature) {
     setTimeout(() => {
         requestAnimationFrame(() => mapObject.flyToBounds(bounds, { duration: 0.7 - deltaZoom, easeLinearity: 0.1 }))
     }, animTime + 200);
-
 
     lastFeatureUndef = feature === undefined;
 }

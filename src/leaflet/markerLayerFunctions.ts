@@ -2,14 +2,16 @@ import type { Feature, FeatureCollection } from "geojson";
 import { LatLng } from "leaflet";
 import L from "leaflet";
 import colors from "tailwindcss/colors";
-import type { AppMode } from "../types";
+import type { AppMode, Centers, CenterType } from "../types";
 
 import marker1 from "/marker1.png"
 import marker2 from "/marker2.png"
 import marker3 from "/marker3.png"
+import { h, render } from "vue";
+import InfoTooltip from "../components/InfoTooltip.vue";
 
 
-export function getPointLayer(feature: Feature, mode: AppMode, getMunicipalities: any, getAllMunicipalities: any, addCenters: any) {
+export function getPointLayer(feature: Feature, mode: AppMode, getMunicipalities: (p: string) => Feature[]|undefined, getAllMunicipalities: () => Feature[]|undefined) {
     let features: Feature[] = [];
 
     switch(mode) {
@@ -17,7 +19,7 @@ export function getPointLayer(feature: Feature, mode: AppMode, getMunicipalities
         features = getMunicipalities(feature?.properties?.name)!;
     break;
     case "ccaa": 
-        features = feature?.properties?.provinces.flatMap((p:any) => getMunicipalities(p))
+        features = feature?.properties?.provinces.flatMap((p:string) => getMunicipalities(p))
     break;
     default:
         features = getAllMunicipalities()!;
@@ -28,52 +30,54 @@ export function getPointLayer(feature: Feature, mode: AppMode, getMunicipalities
         features: features
     };
 
-
-    const centroid = feature.properties?.centroid;
-    return addCenters(jsonTemplate, new LatLng(centroid[0], centroid[1]));
+    return jsonTemplate;
 }
 
 
-export function useOnEachFeaturePoint(mode: AppMode) {
+export function addCenterFeatures(collection: FeatureCollection, centers: Centers) {
+    collection.features.push({
+        type: 'Feature',
+        properties: { centerType: 'centroid' as CenterType },
+        geometry: {
+            type: 'Point',
+            coordinates: centers.centroid
+        }
+    });
+
+    collection.features.push({
+        type: 'Feature',
+        properties: { centerType: 'municipal' as CenterType },
+        geometry: {
+            type: 'Point',
+            coordinates: centers.municipal
+        }
+    });
+
+    collection.features.push({
+        type: 'Feature',
+        properties: { centerType: 'population' as CenterType },
+        geometry: {
+            type: 'Point',
+            coordinates: centers.population
+        }
+    });
+
+    return collection;
+}
+
+
+export function useOnEachFeaturePoint(mode: AppMode, centers: Centers) {
     return (f: Feature, layer: L.Layer) => {
         if(f.properties?.centerType)
             return;
 
-        const tooltipContent = `
-            <div class="bg-white rounded-xl shadow-lg px-4 py-3 min-w-40">
+        const container = document.createElement('div')
+        render(h(InfoTooltip, { f, mode, centers }), container);
 
-            <div class="flex items-center justify-between mb-1">
-                <span class="font-semibold text-gray-800">
-                ${f.properties?.name}
-                </span>
-                ${
-                capitalByMode(f, mode)
-                ?   `<span class="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
-                    Capital
-                    </span>`
-                : ""
-                }
-            </div>
-
-            <div class="text-sm text-gray-500">
-                Population
-            </div>
-
-            <div class="text-lg font-bold text-gray-900">
-                ${f.properties?.population.toLocaleString()}
-            </div>
-
-            <div class="flex flex-col items-center">
-                <div class="bg-white rounded-xl shadow-lg px-4 py-3"></div>
-                <div class="w-3 h-3 bg-white rotate-45 -mt-1 shadow"></div>
-            </div>
-
-            </div>`;
-            
-        layer.bindTooltip(tooltipContent, {
+        layer.bindTooltip(container.innerHTML, {
             direction: "top",
             offset: [0, 0],
-            className: 'custom-tooltip'
+            className: 'custom-tooltip',
         });
     }
 }
@@ -90,6 +94,7 @@ export function usePointToLayer(mode: AppMode) {
                 color: colors.stone[900],
                 weight: 1,
                 pane: 'shadowPane',
+                bubblingMouseEvents: false
             });
         else {
             const options = structuredClone(L.Icon.Default.prototype.options) as L.IconOptions;
@@ -115,7 +120,7 @@ export function resizeMarkers(layer: any, zoom: number, mode: AppMode) {
     layer.setStyle({ opacity: zoom < 7? 0 : 1 });
 }
 
-function capitalByMode(f: Feature, mode: AppMode) {
+export function capitalByMode(f: Feature, mode: AppMode) {
     let cap = false;
     switch(mode) {
         case "spa": cap = f.properties?.nationCap; break;
