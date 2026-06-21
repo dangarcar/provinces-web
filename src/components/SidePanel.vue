@@ -1,7 +1,7 @@
 <template>
     <div class="bg-stone-800">
-        <div v-if="selectedFeature" class="m-3 md:min-w-[20svw] flex flex-col">
-            <div class="flex p-1 pr-0 md:pr-1 gap-2">
+        <div v-if="selectedFeature" class="md:min-w-[20svw] m-1 flex flex-col">
+            <div class="flex m-3 pr-0 md:pr-1 gap-2">
                 <h1 class="text-4xl font-bold grow">{{ selectedFeature?.properties?.name }}</h1>
 
                 <div class="self-end">
@@ -9,16 +9,16 @@
                 </div>
             </div>
 
-            <div v-if="selectedFeature && mode" class="p-1">
-                <h2 class="text-xl font-semibold -ml-0.5 mt-2">Centros:</h2>
+            <div v-if="selectedFeature && mode" class="flex-1 overflow-y-auto min-h-0 p-3 max-h-[calc(33svh-3rem)] md:max-h-full">
+                <h2 class="text-xl font-semibold -ml-0.5">Centros:</h2>
                 
-                <CenterCard  title="Centroide" centerName="centroid" class="mt-2"
+                <CenterCard  title="Centroide" centerName="centroid" class="mt-2 mb-4"
                     :markerSrc="marker1" :selectedFeature :mode />
 
-                <CenterCard  title="Centro de los municipios" centerName="municipal" class="mt-4"
+                <CenterCard  title="Centro de los municipios" centerName="municipal" class="mb-4"
                     :markerSrc="marker2" :selectedFeature :mode />
 
-                <CenterCard title="Centro de población" centerName="population" class="mt-4"
+                <CenterCard title="Centro de población" centerName="population" class="mb-4"
                     :markerSrc="marker3" :selectedFeature :mode />
             </div>            
         </div>
