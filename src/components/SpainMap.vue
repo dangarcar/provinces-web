@@ -167,6 +167,10 @@ function setFeature(feature?: Feature) {
         const centers = getCenters(pointLayer, feature.properties?.centroid);
         if(feature.properties) {
             feature.properties.centers = centers;
+            feature.properties.villages = pointLayer.features.map(e => {
+                //@ts-ignore
+                return { coords: e.geometry.coordinates, props: e.properties }
+            });
         }
 
         const geolayer = L.geoJSON();

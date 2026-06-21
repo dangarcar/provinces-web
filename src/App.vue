@@ -60,9 +60,9 @@ function onElementSelected(feature?: Feature) {
         />
 
         <div class="grow overflow-hidden flex flex-col-reverse md:flex-row">
-            <SidePanel :selected-feature 
+            <SidePanel :selected-feature :mode
                 class="transition-[height] md:transition-[width] duration-400 ease-out md:h-full" 
-                :class="selectedFeature? 'h-1/4 md:w-1/4': 'h-0 md:w-0'"
+                :class="selectedFeature? 'h-2/5 md:w-1/4': 'h-0 md:w-0'"
             />
 
             <div class="relative grow">

@@ -92,11 +92,12 @@ export function usePopulation() {
             return {
                 type: 'Feature',
                 properties: {
-                    name: e.name,
+                    name: e.name.split(',').reverse().filter(c => c != ',').join(' '),
                     population: e.population,
                     provCap: e.provCap,
                     ccaaCap: e.ccaaCap,
-                    nationCap: e.nationCap
+                    nationCap: e.nationCap,
+                    province: province
                 },
                 geometry: {
                     type: "Point",
