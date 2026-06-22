@@ -22,6 +22,6 @@
     padding: 0 !important;
 }
 
-.leaflet-tooltip.custom-tooltip::before {
-    display: none; /* removes arrow */
+.leaflet-interactive {
+    outline: none !important;
 }
