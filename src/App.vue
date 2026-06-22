@@ -18,6 +18,7 @@ const newMode = ref<AppMode | undefined>();
 
 const mapLoaded = ref<boolean>(false);
 const firstLoad = ref<boolean>(false);
+const closeFlag = ref<boolean>(false);
 
 const selectedFeature = ref<Feature>();
 
@@ -47,6 +48,10 @@ function onElementSelected(feature?: Feature) {
     selectedFeature.value = feature;
 }
 
+function onCloseLayer() {
+    closeFlag.value = !closeFlag.value;
+}
+
 </script>
 
 
@@ -61,6 +66,7 @@ function onElementSelected(feature?: Feature) {
 
         <div class="grow overflow-hidden flex flex-col-reverse md:flex-row">
             <SidePanel :selected-feature :mode
+                @close-layer="onCloseLayer"
                 class="transition-[height] md:transition-[width] duration-400 ease-out md:h-full" 
                 :class="selectedFeature? 'h-2/5 md:w-1/4': 'h-0 md:w-0'"
             />
@@ -69,9 +75,8 @@ function onElementSelected(feature?: Feature) {
                 <LoadingScreen v-if="!mapLoaded" class="absolute inset-0 z-2000"/>
                 
                 <SpainMap class="h-full z-0" 
-                    :mode="mode" 
-                    :new-mode="newMode" 
                     :cached-geodata="props.cachedGeodata" 
+                    :mode  :new-mode  :close-flag
                     @on-geo-loaded="onGeoLoaded"
                     @on-geo-mounted-layer="onGeoLayerMounted"
                     @element-selected="onElementSelected"

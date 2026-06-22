@@ -13,28 +13,31 @@
         <div class="flex text-xs justify-between px-1 mb-0.5">
             <span class=" text-stone-500">Población:</span>
             <span class="text-stone-400">
-                {{ f.properties?.population.toLocaleString() }}
+                {{ f.properties?.population.toLocaleString() }} hab
             </span>
         </div>
 
         <div class="flex text-xs justify-between px-1">
             <span class=" text-gray-500">Dist. centroide:</span>
             <span class="text-teal-500">
-                {{ distanceKm(f.geometry.coordinates, centers.centroid).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
+                {{ //@ts-ignore
+                    distanceKm(f.geometry.coordinates, centers.centroid).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
             </span>
         </div>
 
         <div class="flex text-xs justify-between px-1">
             <span class=" text-gray-500">Dist. municipal:</span>
             <span class="text-fuchsia-600">
-                {{ distanceKm(f.geometry.coordinates, centers.municipal).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
+                {{ //@ts-ignore
+                    distanceKm(f.geometry.coordinates, centers.municipal).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
             </span>
         </div>
 
         <div class="flex text-xs justify-between px-1">
             <span class=" text-gray-500">Dist. población:</span>
             <span class="text-amber-600">
-                {{ distanceKm(f.geometry.coordinates, centers.population).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
+                {{ //@ts-ignore
+                    distanceKm(f.geometry.coordinates, centers.population).toLocaleString('es-ES', { maximumFractionDigits: 2 }) }} km
             </span>
         </div>
 

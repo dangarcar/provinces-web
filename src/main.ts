@@ -20,6 +20,6 @@ import App from './App.vue'
 const params = new URLSearchParams(window.location.search)
 
 const app = createApp(App, {
-    cachedGeodata: params.has('cached_geodata')
+    cachedGeodata: !params.has('calculate')
 })
 app.mount('#app')

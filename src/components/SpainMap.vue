@@ -32,7 +32,8 @@ import { addCenterFeatures, getPointLayer, resizeMarkers, useOnEachFeaturePoint,
 const props = defineProps<{
     cachedGeodata: boolean,
     mode?: AppMode,
-    newMode?: AppMode
+    newMode?: AppMode,
+    closeFlag: boolean
 }>();
 
 const emit = defineEmits<{
@@ -111,6 +112,17 @@ watch(() => props.mode, async (mode) => {
 }, { immediate: true })
 
 
+watch(() => props.closeFlag, _ => {
+    const layerGroup = layerRef.value?.leafletObject;
+
+    if(lastLayer)
+        (layerGroup?.getLayer(polyLayerId) as L.GeoJSON).resetStyle(lastLayer);
+
+    lastLayer = undefined;
+    setFeature(undefined);
+})
+
+
 const onEachPolygonFeature = (f: Feature, layer: L.Layer) => {
     const layerGroup = layerRef.value?.leafletObject;
     
@@ -131,19 +143,32 @@ const onEachPolygonFeature = (f: Feature, layer: L.Layer) => {
             if(!props.mode) 
                 return;
 
+            const layer = e.target;
+            
+            if(isMobile.value) {
+                if(lastLayer === undefined) {
+                    layer.setStyle(getStyle(props.mode, 'click'))
+                    lastLayer = layer;
+                    setFeature(f);    
+                } else {
+                    const pointLayer = layerGroup?.getLayer(pointLayerId);
+                    pointLayer?.closeTooltip();
+                }
+                
+                return;
+            }
+
 
             if(lastLayer)
                 (layerGroup?.getLayer(polyLayerId) as L.GeoJSON).resetStyle(lastLayer);
         
-            const layer = e.target;
             if(lastLayer !== layer) {
                 layer.setStyle(getStyle(props.mode, 'click'))
 
                 lastLayer = layer;
                 setFeature(f);                
             } else {
-                if(!isMobile.value)
-                    layer.setStyle(getStyle(props.mode, 'hover'))
+                layer.setStyle(getStyle(props.mode, 'hover'))
 
                 lastLayer = undefined;
                 setFeature(undefined);
